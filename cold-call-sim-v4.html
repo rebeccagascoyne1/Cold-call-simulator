@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cold Call Sim — Ping Identity</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0f0f12;
+  --surface: #16161c;
+  --surface2: #1e1e26;
+  --border: #242430;
+  --border2: #32323f;
+  --accent: #22d48a;
+  --accent-dim: rgba(34,212,138,0.1);
+  --red: #f05272;
+  --red-dim: rgba(240,82,114,0.1);
+  --blue: #5b8ef0;
+  --blue-dim: rgba(91,142,240,0.1);
+  --amber: #f0a050;
+  --amber-dim: rgba(240,160,80,0.1);
+  --text: #e0e0ec;
+  --text2: #a0a0b8;
+  --muted: #505068;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* NAV */
+.nav {
+  display: flex; align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  background: rgba(15,15,18,0.97);
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(8px);
+  height: 52px;
+  gap: 8px;
+}
+.nav-logo {
+  font-weight: 700; font-size: 14px; color: var(--text);
+  padding-right: 20px; border-right: 1px solid var(--border);
+  margin-right: 8px; letter-spacing: -0.2px; white-space: nowrap;
+}
+.nav-logo span { color: var(--accent); }
+.nav-tab {
+  padding: 6px 12px; font-size: 13px; font-family: 'Inter', sans-serif;
+  color: var(--muted); cursor: pointer; border-radius: 6px;
+  transition: all 0.15s; background: none; border: none;
+  font-weight: 500; letter-spacing: 0;
+}
+.nav-tab:hover { color: var(--text2); background: var(--surface2); }
+.nav-tab.active { color: var(--text); background: var(--surface2); }
+.nav-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent-dim);
+  color: var(--accent); font-size: 11px; font-weight: 600; margin-left: 5px;
+  padding: 0 4px;
+}
+
+/* LAYOUT */
+.page { display: none; max-width: 800px; margin: 0 auto; padding: 36px 24px 80px; }
+.page.active { display: block; }
+
+/* TYPOGRAPHY */
+.page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.3px; }
+.page-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px;
+}
+
+/* CARDS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 14px; }
+
+/* BADGES */
+.badge {
+  display: inline-block; font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 4px; margin-bottom: 12px;
+}
+.badge-green { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(34,212,138,0.2); }
+.badge-red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(240,82,114,0.2); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(91,142,240,0.2); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(240,160,80,0.2); }
+
+/* INFO GRID */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.info-item .lbl { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 3px; }
+.info-item .val { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; }
+
+/* ROLE GRID */
+.role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.role-card {
+  padding: 18px 20px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 8px; cursor: pointer; transition: all 0.15s; text-align: left;
+}
+.role-card:hover { border-color: var(--border2); background: var(--surface2); }
+.role-card.active-caller { border-color: var(--accent); background: var(--accent-dim); }
+.role-card.active-prospect { border-color: var(--red); background: var(--red-dim); }
+.role-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+.role-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.role-desc { font-size: 12px; color: var(--muted); }
+
+/* SCENARIO GRID */
+.scenario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; margin-bottom: 24px; }
+.scenario-card {
+  padding: 14px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 8px; cursor: pointer; transition: all 0.15s;
+}
+.scenario-card:hover { border-color: var(--border2); background: var(--surface2); }
+.scenario-card.active { border-color: var(--blue); background: var(--blue-dim); }
+.sc-name { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.sc-meta { font-size: 11px; color: var(--muted); }
+
+/* PROSPECT PICKER (prospect flow only) */
+.prospect-pick-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 24px; }
+.prospect-pick-card {
+  padding: 14px 16px; border: 1px solid var(--border); background: var(--surface);
+  border-radius: 8px; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 14px;
+}
+.prospect-pick-card:hover { border-color: var(--border2); background: var(--surface2); }
+.prospect-pick-card.active { border-color: var(--red); background: var(--red-dim); }
+.ppc-name { font-weight: 600; font-size: 13px; }
+.ppc-title { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.ppc-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--blue); background: var(--blue-dim); border: 1px solid rgba(91,142,240,0.2); padding: 2px 7px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; }
+
+/* CALL HEADER */
+.call-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 14px;
+}
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; animation: blink 1.4s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.call-timer { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); margin-left: auto; }
+.call-label { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; }
+
+.timer-track { height: 2px; background: var(--border); border-radius: 1px; margin-bottom: 20px; overflow: hidden; }
+.timer-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear, background 0.5s; }
+
+/* CALL CARDS */
+.call-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 12px; }
+.call-card-caller { border-color: rgba(34,212,138,0.2); }
+.call-card-prospect { border-color: rgba(240,82,114,0.2); }
+.call-card-shared { border-color: rgba(91,142,240,0.15); }
+
+hr.div { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+.obj-list, .tip-list { list-style: none; }
+.obj-list li { padding: 8px 12px; margin-bottom: 6px; border-radius: 6px; background: var(--red-dim); border-left: 2px solid var(--red); font-size: 13px; line-height: 1.5; font-style: italic; color: var(--text2); }
+.tip-list li { padding: 8px 12px; margin-bottom: 6px; border-radius: 6px; background: var(--accent-dim); border-left: 2px solid var(--accent); font-size: 13px; line-height: 1.5; color: var(--text2); }
+
+.trait-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin: 2px; font-family: 'JetBrains Mono', monospace; background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(91,142,240,0.2); }
+
+/* SHARE BOX */
+.share-box {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 16px 18px; margin-bottom: 16px;
+}
+.share-box-label { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.share-url-row { display: flex; gap: 8px; align-items: center; }
+.share-url {
+  flex: 1; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 8px 12px; font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--accent); overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.copy-feedback { font-size: 12px; color: var(--accent); opacity: 0; transition: opacity 0.3s; font-family: 'JetBrains Mono', monospace; }
+.copy-feedback.show { opacity: 1; }
+
+/* DEBRIEF */
+.reveal-btn {
+  width: 100%; padding: 12px; border: 1px dashed var(--border2); border-radius: 6px;
+  background: transparent; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; cursor: pointer; transition: all 0.15s; letter-spacing: 1px; text-transform: uppercase;
+}
+.reveal-btn:hover { border-color: var(--blue); color: var(--blue); }
+.debrief-qs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.debrief-q { padding: 14px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
+.dq-label { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 6px; }
+.dq-text { font-size: 12px; line-height: 1.6; color: var(--muted); }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 6px; font-family: 'Inter', sans-serif;
+  font-weight: 600; font-size: 13px; cursor: pointer; border: none;
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-primary { background: var(--accent); color: #0f0f12; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(240,82,114,0.3); }
+.btn-danger:hover { background: var(--red-dim); }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+
+/* COMPANY LIST */
+.company-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+  transition: border-color 0.15s; margin-bottom: 10px;
+}
+.company-item:hover { border-color: var(--border2); }
+.company-item-info { flex: 1; min-width: 0; }
+.company-item-name { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.company-item-meta { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.company-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.prospect-pills { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+.prospect-pill { font-size: 11px; font-family: 'JetBrains Mono', monospace; padding: 2px 7px; border-radius: 3px; background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(91,142,240,0.15); }
+
+/* FORM MODAL */
+.form-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  z-index: 200; display: none; align-items: flex-start;
+  justify-content: center; padding: 20px; overflow-y: auto;
+}
+.form-modal-overlay.open { display: flex; }
+.form-modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 24px; width: 100%; max-width: 620px;
+  margin: auto;
+}
+.form-modal-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; letter-spacing: -0.2px; }
+.form-modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+
+.field-group { margin-bottom: 14px; }
+.field-label { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; display: block; }
+input[type=text], textarea, select {
+  width: 100%; background: var(--bg); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 9px 12px; color: var(--text);
+  font-family: 'Inter', sans-serif; font-size: 13px;
+  transition: border-color 0.15s; outline: none;
+}
+textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+input[type=text]:focus, textarea:focus { border-color: var(--accent); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.prospect-editor {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; margin-bottom: 10px;
+}
+.prospect-editor-title {
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  color: var(--red); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+
+.divider-label { display: flex; align-items: center; gap: 8px; margin: 16px 0 12px; }
+.divider-label span { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--muted); letter-spacing: 0.5px; white-space: nowrap; }
+.divider-label::before, .divider-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--muted); }
+.empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+.empty-state p { font-size: 13px; line-height: 1.6; max-width: 300px; margin: 0 auto 16px; }
+
+/* STEP INDICATOR */
+.steps { display: flex; align-items: center; gap: 0; margin-bottom: 24px; }
+.step { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.step.active { color: var(--text); }
+.step.done { color: var(--accent); }
+.step-num { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.step.active .step-num { border-color: var(--text); background: var(--surface2); color: var(--text); }
+.step.done .step-num { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+.step-arrow { width: 24px; height: 1px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+
+@media(max-width:580px) {
+  .field-row { grid-template-columns: 1fr; }
+  .role-grid { grid-template-columns: 1fr 1fr; }
+  .debrief-qs { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+  .scenario-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">Cold Call <span>Sim</span></div>
+  <button class="nav-tab active" onclick="showPage('sim')" id="tab-sim">▶ Play</button>
+  <button class="nav-tab" onclick="showPage('manage')" id="tab-manage">⚙ Companies <span class="nav-count" id="co-count">0</span></button>
+</nav>
+
+<!-- ══════════════════════════════════════
+     SIM PAGE
+══════════════════════════════════════ -->
+<div class="page active" id="page-sim">
+
+  <!-- STEP 0: ROLE SELECT -->
+  <div id="step-role">
+    <div class="page-title">Start a round</div>
+    <div class="page-sub">Pick your role — the flows are different for each</div>
+
+    <div class="section-label">Your role this round</div>
+    <div class="role-grid">
+      <div class="role-card" id="role-caller" onclick="setRole('caller')">
+        <span class="role-icon">📞</span>
+        <div class="role-name">Caller (SDA)</div>
+        <div class="role-desc">Your colleague sends you a link — open it to see your brief</div>
+      </div>
+      <div class="role-card" id="role-prospect" onclick="setRole('prospect')">
+        <span class="role-icon">🎭</span>
+        <div class="role-name">Prospect</div>
+        <div class="role-desc">You pick the company and persona, then send the caller their link</div>
+      </div>
+    </div>
+
+    <div id="caller-link-entry" style="display:none;">
+      <div class="section-label">Paste the link your colleague sent you</div>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <input type="text" id="caller-link-input" placeholder="Paste link here..." style="flex:1;">
+        <button class="btn btn-primary" onclick="loadFromLink()">Load</button>
+      </div>
+      <div id="link-error" style="font-size:12px; color:var(--red); display:none; margin-bottom:12px;"></div>
+      <div style="font-size:12px; color:var(--muted);">Or if you're testing solo — <a href="#" onclick="skipToSetup(); return false;" style="color:var(--blue);">set up a round manually</a></div>
+    </div>
+
+    <div id="prospect-continue-btn" style="display:none;">
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="goToProspectSetup()">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: PROSPECT SETUP (prospect picks company + persona) -->
+  <div id="step-prospect-setup" style="display:none;">
+    <div class="page-title">Set up the round</div>
+    <div class="page-sub">Pick a company and the persona you'll play — then send the caller their link</div>
+
+    <div class="section-label">1. Company to call</div>
+    <div id="scenario-grid" class="scenario-grid"></div>
+
+    <div id="prospect-persona-section" style="display:none;">
+      <div class="section-label">2. Your persona</div>
+      <div class="prospect-pick-grid" id="prospect-pick-grid"></div>
+    </div>
+
+    <div id="share-section" style="display:none;">
+      <div class="share-box">
+        <div class="share-box-label">📎 Send this link to the caller</div>
+        <div class="share-url-row">
+          <div class="share-url" id="share-url-display"></div>
+          <button class="btn btn-primary btn-sm" onclick="copyShareLink()">Copy</button>
+          <span class="copy-feedback" id="copy-feedback">Copied!</span>
+        </div>
+        <div style="font-size:12px; color:var(--muted); margin-top:8px;">They open it, see their brief, and you both start the call together.</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startAsProspect()">I'm ready — start my card</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE CALL VIEW -->
+  <div id="sim-call" style="display:none;">
+    <div class="call-header">
+      <div class="live-dot"></div>
+      <span class="call-label">LIVE</span>
+      <span id="call-company-label" style="font-size:13px; font-weight:500; color:var(--text2); margin-left:4px;"></span>
+      <span class="call-timer" id="call-timer">3:00</span>
+    </div>
+    <div class="timer-track"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+
+    <div class="call-card call-card-shared">
+      <div class="badge badge-blue">SHARED INTEL</div>
+      <div style="font-size:18px; font-weight:700; margin-bottom:14px; letter-spacing:-0.2px;" id="c-name"></div>
+      <div class="info-grid">
+        <div class="info-item"><div class="lbl">Industry</div><div class="val" id="c-industry"></div></div>
+        <div class="info-item"><div class="lbl">Size</div><div class="val" id="c-size"></div></div>
+        <div class="info-item"><div class="lbl">HQ</div><div class="val" id="c-hq"></div></div>
+        <div class="info-item"><div class="lbl">Current tech</div><div class="val" id="c-tech"></div></div>
+      </div>
+      <div class="info-item"><div class="lbl">Known pain points</div><div class="val" style="margin-top:4px; font-size:13px; font-weight:400; color:var(--text2);" id="c-pain"></div></div>
+    </div>
+
+    <div class="call-card call-card-caller" id="caller-view" style="display:none;">
+      <div class="badge badge-green">YOUR BRIEF — CALLER</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="lbl">You're calling</div><div class="val" id="c-title"></div></div>
+        <div class="info-item"><div class="lbl">Goal</div><div class="val" id="c-goal"></div></div>
+      </div>
+      <hr class="div">
+      <div class="section-label">Suggested angle</div>
+      <p style="font-size:13px; line-height:1.6; margin-bottom:14px; color:var(--text2);" id="c-angle"></p>
+      <div class="section-label">Tips</div>
+      <ul class="tip-list" id="c-tips"></ul>
+    </div>
+
+    <div class="call-card call-card-prospect" id="prospect-view" style="display:none;">
+      <div class="badge badge-red">YOUR PERSONA</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="lbl">Your name</div><div class="val" id="p-name"></div></div>
+        <div class="info-item"><div class="lbl">Title</div><div class="val" id="p-title"></div></div>
+        <div class="info-item"><div class="lbl">Personality</div><div class="val" id="p-personality"></div></div>
+        <div class="info-item"><div class="lbl">Mood today</div><div class="val" id="p-mood"></div></div>
+      </div>
+      <div id="p-traits-wrap" style="margin: 10px 0 4px;"></div>
+      <div class="section-label" style="margin-top:12px;">Backstory</div>
+      <p style="font-size:13px; line-height:1.6; margin-bottom:14px; color:var(--text2);" id="p-backstory"></p>
+      <hr class="div">
+      <div class="section-label">Objections to throw (use naturally, not all at once)</div>
+      <ul class="obj-list" id="p-objections"></ul>
+      <hr class="div">
+      <div class="section-label" style="color:var(--accent);">When to warm up 🟢</div>
+      <p style="font-size:13px; line-height:1.6; color:var(--accent);" id="p-warmup"></p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="endRound()">✅ End call → Debrief</button>
+      <button class="btn btn-ghost" onclick="cancelRound()">↩ Back</button>
+    </div>
+  </div>
+
+  <!-- DEBRIEF -->
+  <div id="sim-debrief" style="display:none;">
+    <div class="page-title">Debrief</div>
+    <div class="page-sub" id="debrief-sub"></div>
+
+    <div class="card">
+      <div class="section-label">Reveal the persona</div>
+      <button class="reveal-btn" id="reveal-btn" onclick="revealPersona()">👁 Tap to reveal who you were talking to</button>
+      <div id="persona-revealed" style="display:none; margin-top:14px;">
+        <div class="info-grid">
+          <div class="info-item"><div class="lbl">Name</div><div class="val" id="d-name"></div></div>
+          <div class="info-item"><div class="lbl">Title</div><div class="val" id="d-title"></div></div>
+          <div class="info-item"><div class="lbl">Personality</div><div class="val" id="d-personality"></div></div>
+          <div class="info-item"><div class="lbl">Mood</div><div class="val" id="d-mood"></div></div>
+        </div>
+        <p style="font-size:12px; color:var(--muted); margin-top:8px; line-height:1.6;" id="d-backstory"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Talk it out</div>
+      <div class="debrief-qs">
+        <div class="debrief-q"><div class="dq-label">✅ What worked?</div><div class="dq-text">What moment landed? Did you get engagement or curiosity?</div></div>
+        <div class="debrief-q"><div class="dq-label">❌ What didn't?</div><div class="dq-text">Where did you lose momentum? Any objection catch you off guard?</div></div>
+        <div class="debrief-q"><div class="dq-label">🔄 Do differently?</div><div class="dq-text">One thing you'd change — opener, pitch, or close?</div></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="newRound()">🔄 New round</button>
+    </div>
+  </div>
+
+  <!-- NO COMPANIES -->
+  <div id="no-companies" class="empty-state" style="display:none;">
+    <div class="icon">🏢</div>
+    <p>No companies yet. Add them in the Companies tab.</p>
+    <button class="btn btn-primary" onclick="showPage('manage')">Add Companies</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MANAGE PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-manage">
+  <div class="page-title">Companies</div>
+  <div class="page-sub">Add and manage the accounts you want to practise on</div>
+  <div id="company-list"></div>
+  <button class="btn btn-primary" onclick="openAddCompany()">+ Add Company</button>
+</div>
+
+<!-- MODAL -->
+<div class="form-modal-overlay" id="modal-overlay">
+  <div class="form-modal">
+    <div class="form-modal-title" id="modal-title">Add Company</div>
+    <div class="form-modal-sub">Fill in what you know — more detail makes better rounds</div>
+    <input type="hidden" id="edit-id">
+
+    <div class="divider-label"><span>COMPANY INFO</span></div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Company Name *</label><input type="text" id="f-name" placeholder="e.g. Tesco Bank"></div>
+      <div class="field-group"><label class="field-label">Industry *</label><input type="text" id="f-industry" placeholder="e.g. Retail Banking"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Size</label><input type="text" id="f-size" placeholder="e.g. 4,000 employees"></div>
+      <div class="field-group"><label class="field-label">HQ</label><input type="text" id="f-hq" placeholder="e.g. Edinburgh, UK"></div>
+    </div>
+    <div class="field-group"><label class="field-label">Current Tech Stack</label><input type="text" id="f-tech" placeholder="e.g. PingFederate, Okta workforce"></div>
+    <div class="field-group"><label class="field-label">Known Pain Points</label><textarea id="f-pain"></textarea></div>
+
+    <div class="divider-label"><span>CALL STRATEGY</span></div>
+    <div class="field-group"><label class="field-label">Caller's Goal</label><input type="text" id="f-goal" placeholder="e.g. Book a 30-min discovery call"></div>
+    <div class="field-group"><label class="field-label">Suggested Angle / Opener</label><textarea id="f-angle"></textarea></div>
+    <div class="field-group"><label class="field-label">Caller Tips (one per line)</label><textarea id="f-tips"></textarea></div>
+
+    <div class="divider-label"><span>PROSPECTS</span></div>
+    <div id="prospects-container"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:14px;" onclick="addProspectEditor()">+ Add Prospect</button>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveCompany()">Save</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function getDefaults() {
+  return [
+    {
+      id: 'tesco-bank',
+      name: 'Tesco Bank',
+      industry: 'Retail Banking / Financial Services',
+      size: '~4,000 employees, 5M+ customer identities',
+      hq: 'Edinburgh, UK',
+      tech: 'PingAccess + PingFederate securing key apps in private AWS cloud. Single common IdP across banking, credit cards, and insurance.',
+      pain: 'Previously siloed identities across products → frictiony CX & higher ops cost. Strong PSD2 / SCA compliance requirements while keeping journeys smooth.',
+      goal: 'Open / expand a CIAM conversation around unifying identities and reducing friction while staying compliant.',
+      angle: 'Tesco Bank had over five million customer identities siloed across products and used Ping to create a single identity layer across banking, cards and insurance in about 12 weeks. How many different login experiences are your retail customers still dealing with today?',
+      tips: ['Lean on PSD2 + SCA + CX together, not just security', 'Use "common identity provider + self-service features" language', 'Great to map to Sales Play 3 – Core IdP CIAM (Improve CX & Build Trust)'],
+      prospects: [
+      {
+        name: 'James Patel',
+        title: 'Head of IT Infrastructure & Platforms',
+        personality: 'Direct, pragmatic',
+        mood: 'Busy but reachable — prefers short to-the-point calls',
+        traits: ['ISAAC – IT Leader', 'Hates waffle', 'Responds to cost/consolidation angle', 'Wants platform simplicity'],
+        backstory: 'James owns the infrastructure estate and is under pressure to consolidate legacy tools and cut costs. He\'s heard plenty of vendor pitches and will shut you down fast if you lead with features. His world is operational resilience and regulatory deadlines — tie identity to both and you have his attention.',
+        objections: ['We already have an IdP', 'We\'re happy with our current provider', 'This isn\'t a priority right now', 'Too expensive'],
+        warmup: 'Mention consolidation, cost reduction or a specific regulatory driver (PSD2, FCA). He warms up when he thinks you understand his operational reality, not just the security pitch.'
+      },
+      {
+        name: 'Laura McKenzie',
+        title: 'Head of Identity & Access Management',
+        personality: 'Analytical, curious',
+        mood: 'Engaged if the conversation is technically credible',
+        traits: ['IVY – IAM Leader', 'Thinks in architecture', 'Curious about platform capabilities', 'Evaluates before committing'],
+        backstory: 'Laura is trying to build a unified architecture across banking, cards and insurance but keeps hitting legacy blockers. She\'s curious about Ping but may already be mid-evaluation with another vendor. She needs to see that Ping solves her specific use case, not a generic pitch.',
+        objections: ['We have just signed a 3-year contract with Okta', 'We\'re in the middle of another project right now, circle back', 'Send me an email', 'Our partner/MSP/system integrator handles this'],
+        warmup: 'Demonstrate knowledge of unified IAM architecture — workforce + CIAM in one platform. Ask a thoughtful question about their current architecture and she will open up.'
+      },
+      {
+        name: 'Chris O\'Donnell',
+        title: 'Director of Cyber Security & Risk',
+        personality: 'Sceptical, risk-averse',
+        mood: 'Guarded — has been burned by vendor over-promises before',
+        traits: ['SALLY – Security Leader', 'Zero Trust minded', 'Dislikes friction but will not compromise on risk', 'Needs proof not promises'],
+        backstory: 'Chris is responsible for breach and fraud risk and is moving towards Zero Trust. He\'s wary of anything that adds user friction. May be locked into a contract but quietly aware it\'s not fully delivering. Won\'t admit problems easily — you need to ask the right questions.',
+        objections: ['We are happy with our current provider', 'We have just signed a 3-year contract with Okta — but there seem to be some issues', 'Too expensive', 'No budget'],
+        warmup: 'Ask about their Zero Trust progress or a specific fraud risk they are managing. If he feels you understand the risk landscape he will lower his guard slightly.'
+      }
+      ]
+    },
+    {
+      id: 'hampshire-trust',
+      name: 'Hampshire Trust Bank',
+      industry: 'Specialist Banking (SME, asset & property finance, savings)',
+      size: '~500–1,000 employees',
+      hq: 'London, UK',
+      tech: 'Partnered with Ping Identity to provide "intelligent access" for customers & brokers. MFA with 24/7 monitoring, optimisation and alerting.',
+      pain: 'Wanted to unify credentials across all platforms for customers and brokers. Needed always-on security without hurting broker / customer experience.',
+      goal: 'Position Ping as the secure access layer for customers, brokers and partners as HTB scales digital channels.',
+      angle: 'We\'re working with UK banks like HTB to unify credentials across all platforms so customers and brokers get one, secure access point with MFA and 24/7 monitoring. How are you handling broker and customer access across your different portals today?',
+      tips: ['Use language from their own press: "unifying credentials", "better experience for customers and brokers"', 'Good entry to Workforce/B2B + CIAM in one story', 'Ask where Open Banking / CMA9 security profile and out-of-hours protection sit today'],
+      prospects: [
+      {
+        name: 'Rebecca Shaw',
+        title: 'Head of Identity & Access Management',
+        personality: 'Methodical, curious',
+        mood: 'Calm, will ask probing questions back',
+        traits: ['IVY – IAM Leader', 'Process-driven', 'Wants to understand before committing', 'Values peer references'],
+        backstory: 'Rebecca owns IAM at HTB and is working to standardise authentication and authorisation across customers, brokers and staff. She\'s methodical — she won\'t be rushed. She may already be evaluating options. Show clear capability around broker and customer access in one platform.',
+        objections: ['We already have an IdP', 'We have just signed a 3-year contract with Okta', 'Send me an email', 'We\'re in the middle of another project right now, circle back'],
+        warmup: 'Ask a specific question about how they manage broker vs customer identities separately. She will engage if you show you understand multi-party access complexity in specialist banking.'
+      },
+      {
+        name: 'Tom Hargreaves',
+        title: 'Director of Digital Channels & Customer Experience',
+        personality: 'Visionary, impatient',
+        mood: 'Energetic — lots going on, short attention span',
+        traits: ['DAVID – Digital Leader', 'Thinks in conversion rates and NPS', 'Not very technical', 'Wants quick wins'],
+        backstory: 'Tom is laser-focused on lifting conversion and NPS. He feels the pain of login friction but thinks it\'s an IT problem to fix. He\'ll be enthusiastic if you frame identity as a CX and revenue lever, but will tune out the moment you go technical.',
+        objections: ['This isn\'t a priority right now', 'Too expensive', 'We are happy with our current provider', 'I am too busy right now, call us back in 3 months'],
+        warmup: 'Lead with a conversion or drop-off stat or a comparable brand story. If he sees a revenue angle he will want to loop in IT and champion it internally.'
+      },
+      {
+        name: 'Niall Brennan',
+        title: 'Head of Financial Crime & Fraud Strategy',
+        personality: 'Cautious, numbers-driven',
+        mood: 'Measured — won\'t be rushed, wants evidence',
+        traits: ['FRANK – Fraud Leader', 'Lives in data', 'Deeply sceptical of vendor claims', 'Wants proof of ATO reduction'],
+        backstory: 'Niall\'s world is ATO and fraudulent applications. He\'s cautious about anything that claims to reduce fraud without evidence. Doesn\'t own identity infrastructure directly but has serious influence. He\'ll want numbers, case studies, and specifics — not a pitch deck.',
+        objections: ['We already have an IdP', 'Our partner/MSP/system integrator handles this', 'No budget', 'Send me an email'],
+        warmup: 'Quote a specific fraud reduction metric from a comparable financial services customer. If the number is credible, he will ask a follow-up. That is your in.'
+      }
+      ]
+    },
+    {
+      id: 'nationwide',
+      name: 'Nationwide Building Society',
+      industry: 'Retail Banking / Building Society',
+      size: '~18,000–20,000 employees',
+      hq: 'Swindon, UK',
+      tech: 'Listed Ping Identity customer. Hybrid environment (legacy mainframes + modern cloud apps), Microsoft 365, multiple customer and broker portals.',
+      pain: 'Huge member base and multi-channel journeys (branches, web, mobile). Strong regulatory pressure (FCA, PRA, Open Banking) + Zero Trust / fraud concerns. Complexity around multiple portals for savings, mortgages, and intermediaries.',
+      goal: 'Connect with Head of IAM / CISO / Head of Digital on simplifying member journeys and tightening fraud controls.',
+      angle: 'I\'m speaking with UK mutuals who are trying to keep savings and mortgage journeys simple for members while tightening fraud and SCA. How consistent are your login and recovery experiences today across savings, mortgages and broker portals?',
+      tips: ['Emphasise member trust + mutual brand → low-friction, safe journeys', 'Good fit for SP1 (Prevent Fraud & Simplify Access) and SP3 (Core CIAM) together', 'Ask where identity sprawl shows up (different portals, brands, legacy apps)'],
+      prospects: [
+      {
+        name: 'Mark Johnson',
+        title: 'Director of Technology & Architecture',
+        personality: 'Direct, technical',
+        mood: 'No-nonsense — values brevity and substance',
+        traits: ['ISAAC – IT Leader', 'Hates vendor fluff', 'Thinks in systems and resilience', 'Wants platform consolidation'],
+        backstory: 'Mark manages a complex hybrid estate of IAM tools across Nationwide. He knows it\'s messy and wants to simplify it — but he\'s been through enough projects to be sceptical of transformation promises. He responds to technical credibility and clear evidence of delivery, not vision statements.',
+        objections: ['We already have an IdP', 'We are happy with our current provider', 'This isn\'t a priority right now', 'We\'re in the middle of another project right now, circle back'],
+        warmup: 'Ask a specific architectural question — e.g. how they\'re managing the overlay between legacy on-prem IAM and cloud apps. Show you understand the hybrid complexity.'
+      },
+      {
+        name: 'Sarah Williams',
+        title: 'Head of Enterprise Identity & Access',
+        personality: 'Detail-oriented, curious',
+        mood: 'Open but will probe your claims',
+        traits: ['IVY – IAM Leader', 'Governance-focused', 'Thinks about policy and control planes', 'Will challenge technical claims'],
+        backstory: 'Sarah is trying to achieve central governance of identities for employees, members and intermediaries from a single control plane. She understands the problem deeply and will quickly see through surface-level pitches. She\'s curious about Ping\'s capabilities but will test your knowledge.',
+        objections: ['We have just signed a 3-year contract with Okta — but there are some issues', 'Too expensive', 'Send me an email', 'Our partner/MSP/system integrator handles this'],
+        warmup: 'Show you understand identity governance at scale — policy-based access, intermediary management, audit trails. She\'ll warm up quickly if you speak her language.'
+      },
+      {
+        name: 'Emma Lewis',
+        title: 'Director of Member Digital Experience',
+        personality: 'Outcome-focused, friendly',
+        mood: 'Positive — genuinely cares about member experience',
+        traits: ['LINDA – Line of Business Leader', 'Thinks in member journeys', 'Not technical', 'Has budget influence'],
+        backstory: 'Emma owns the member experience across branch, web, app and broker channels. She feels the pain of inconsistent login and recovery experiences but doesn\'t own the technical solution. She\'s friendly and will engage, but will pass you to IT to progress. Get her enthusiastic enough to make that intro.',
+        objections: ['This isn\'t a priority right now', 'Too expensive', 'We\'re in the middle of another project right now, circle back', 'I am too busy right now, call us back in 3 months'],
+        warmup: 'Ask about a specific member journey that\'s causing friction — e.g. mortgage application login or savings account recovery. She\'ll open up and give you useful intel about the real pain.'
+      }
+      ]
+    },
+    {
+      id: 'aviva',
+      name: 'Aviva',
+      industry: 'Insurance (Life, GI, pensions, investments)',
+      size: '~22,000+ employees globally',
+      hq: 'London, UK',
+      tech: 'Listed Ping Identity customer. Multiple customer and adviser portals, heavy use of Microsoft / cloud services; complex broker ecosystem.',
+      pain: 'Multiple digital portals for customers, advisers, employers → fragmented identity. Need to secure sensitive financial & health data while improving CX and self-service. Regulatory drivers: FCA, PRA, GDPR, Solvency II.',
+      goal: 'Open an insurance CIAM / B2B identity conversation around adviser & customer journeys and data protection.',
+      angle: 'We\'re helping UK insurers unify customer and adviser access so that one identity works across claims, policy admin and retirement portals, without adding more login friction. How joined-up are your digital journeys today between direct customers and intermediaries?',
+      tips: ['Talk adviser + employer + customer identities, not just retail customers', 'Map pains to registration, claims, policy changes, document access', 'Position Ping as a way to standardise SSO/MFA/orchestration across brands and channels'],
+      prospects: [
+      {
+        name: 'Anita Desai',
+        title: 'Group Head of Identity & Access Management',
+        personality: 'Structured, thoughtful',
+        mood: 'Professional — expects preparation and precision',
+        traits: ['IVY – IAM Leader', 'Thinks cross-brand and cross-channel', 'Wants platform consistency', 'Will check references'],
+        backstory: 'Anita is trying to provide a single IAM layer across life, GI, pensions and investments for customers, advisers and partners. She\'s structured and expects vendors to come prepared. May already be in an Okta contract but is aware of gaps, particularly around adviser and partner access.',
+        objections: ['We already have an IdP', 'We have just signed a 3-year contract with Okta', 'Send me an email', 'Our partner/MSP/system integrator handles this'],
+        warmup: 'Reference a specific use case she\'d recognise — e.g. unified adviser access across multiple product lines. Name a comparable insurer who solved this with Ping and she\'ll want to know more.'
+      },
+      {
+        name: 'Gareth Holmes',
+        title: 'Group CISO',
+        personality: 'Sceptical, time-poor',
+        mood: 'Distracted — will cut you off within 60 seconds if you waffle',
+        traits: ['SALLY – Security Leader', 'Thinks board-level risk', 'Hates being sold to', 'Responds to peer CISOs and hard data'],
+        backstory: 'Gareth owns enterprise-wide access controls and auditability, also navigating M&A complexity. He doesn\'t have time for vendor calls and will dismiss you fast unless you get to a specific relevant point quickly. He has heard every security pitch going.',
+        objections: ['We are happy with our current provider', 'Too expensive', 'No budget', 'This isn\'t a priority right now'],
+        warmup: 'Open with a one-sentence reference to a peer CISO outcome or a board-level risk angle like M&A or regulatory audit. If it is relevant to his world in the first 20 seconds, he will give you another minute.'
+      },
+      {
+        name: 'Clare Richardson',
+        title: 'Director of Retail & SME Digital Platforms',
+        personality: 'Commercial, direct',
+        mood: 'Brisk — focused on revenue and market outcomes',
+        traits: ['LINDA – Line of Business Leader', 'Thinks in cross-sell and retention', 'Not technical', 'Responds to commercial impact'],
+        backstory: 'Clare wants to use identity to personalise and cross-sell across digital products without compromising trust. She sees identity as a business enabler not an IT problem — but needs someone to connect those dots clearly. She\'ll lose interest fast if the conversation drifts into infrastructure.',
+        objections: ['Not interested', 'This isn\'t a priority right now', 'Too expensive', 'I am too busy right now, call us back in 3 months'],
+        warmup: 'Connect identity to a commercial outcome she owns — personalisation, cross-sell conversion, or reducing friction in a key customer journey. Keep it business-language throughout.'
+      }
+      ]
+    },
+    {
+      id: 'bank-of-ireland',
+      name: 'Bank of Ireland',
+      industry: 'Retail & Commercial Banking',
+      size: '~9,000+ employees',
+      hq: 'Dublin, Ireland',
+      tech: 'Large mix of legacy core banking + modern mobile/web channels. Likely combination of enterprise IdP, on-prem IAM and cloud services; multiple portals for retail, SME and corporate banking.',
+      pain: 'Regulatory pressure (EBA, PSD2, GDPR) on SCA and fraud controls. Need to maintain low-friction mobile journeys while keeping strong security. Complexity across RoI / UK operations and multiple product lines.',
+      goal: 'Position Ping for Irish retail bank CIAM / Workforce Zero Trust: unify identity and improve SCA experience.',
+      angle: 'I\'m calling because we\'re working with UK & European banks on reducing SCA friction in mobile and web while still tightening fraud controls. How happy are you today with the balance between strong customer authentication and drop-off in your digital channels?',
+      tips: ['Keep it PSD2 / SCA + CX focused, not product-feature heavy', 'Ask where journey orchestration lives (security vs digital vs product)', 'Great candidate for SP1 – fraud & ATO as a beachhead, then SP3 for core CIAM'],
+      prospects: [
+      {
+        name: 'Patrick Doyle',
+        title: 'Group Head of IT & Core Banking Platforms',
+        personality: 'Pragmatic, no-nonsense',
+        mood: 'Efficient — respects people who get to the point',
+        traits: ['ISAAC – IT Leader', 'Focused on delivery and stability', 'Sceptical of big transformation promises', 'Wants a clear migration path'],
+        backstory: 'Patrick is modernising core banking and needs IAM to work consistently across heritage and cloud applications. He\'s allergic to ambiguity. He wants to know: what does migration look like, what breaks, and what is the realistic timeline.',
+        objections: ['We already have an IdP', 'We have just signed a 3-year contract with Okta', 'We\'re in the middle of another project right now, circle back', 'Send me an email'],
+        warmup: 'Ask a pointed question about how they are managing identity across heritage core banking and newer cloud apps. He appreciates people who understand hybrid complexity in financial services.'
+      },
+      {
+        name: 'Siobhan Murphy',
+        title: 'Head of Fraud Strategy & Analytics',
+        personality: 'Data-driven, guarded',
+        mood: 'Measured — won\'t trust vendor claims without evidence',
+        traits: ['FRANK – Fraud Leader', 'Owns payments fraud and ATO', 'Analytical not emotional', 'Will ask for proof of concept'],
+        backstory: 'Siobhan is fighting payments fraud and account takeover across digital channels. She\'s data-driven and will challenge any claim you make. Doesn\'t directly own identity infrastructure but has serious influence. Frustrated by solutions that add friction to genuine customers while missing the real fraud signals.',
+        objections: ['We are happy with our current provider', 'Our partner/MSP/system integrator handles this', 'No budget', 'This isn\'t a priority right now'],
+        warmup: 'Lead with a specific ATO or payments fraud metric from a comparable bank. If the data is credible and relevant she will ask a follow-up question.'
+      },
+      {
+        name: 'Conor O\'Neill',
+        title: 'Head of Identity, Access & Directory Services',
+        personality: 'Analytical, sceptical',
+        mood: 'Cautious — has opinions about Ping already',
+        traits: ['IVY – IAM Leader', 'Technically deep', 'Has existing views on vendors', 'Will probe your product knowledge'],
+        backstory: 'Conor is consolidating multiple directories and access systems across workforce and customer channels. He knows the market well and may have had a previous experience with Ping that wasn\'t great. He\'ll test your product knowledge and won\'t be impressed by a surface-level pitch.',
+        objections: ['We tried Ping before and it did not work for us', 'We have just signed a 3-year contract with Okta — but there are some issues', 'Too expensive', 'Send me an email'],
+        warmup: 'If he brings up a past Ping experience don\'t deflect — acknowledge it and ask what specifically didn\'t work. Showing you\'re willing to address it directly builds more credibility than pivoting away.'
+      }
+      ]
+    },
+    {
+      id: 'jd-sports',
+      name: 'JD Sports',
+      industry: 'Retail / E-Commerce (Sports & Fashion)',
+      size: '~60,000+ employees globally',
+      hq: 'Bury, Greater Manchester, UK',
+      tech: 'Uses Fluent Commerce for distributed order management; Fluent\'s platform is secured and integrated with PingOne for identity and SSO. Complex omnichannel stack across web, app, and stores.',
+      pain: 'Need to coordinate inventory and fulfilment across many locations with fast delivery expectations. High risk of account takeover and promo abuse in e-commerce.',
+      goal: 'Connect identity to DOM / e-commerce modernisation: reduce fraud and friction in sign-up, login, and checkout.',
+      angle: 'We work with Fluent Commerce (who power brands like JD Sports and Ted Baker) to add secure SSO and risk-based controls into order management journeys. How are you handling login, password reset and high-risk actions across your web and app today?',
+      tips: ['Talk cart abandonment vs. fraud together, not just security', 'Use language like "single CIAM layer that travels with customers across web, app and store collection"', 'Great fit for Prevent Fraud & Simplify Access (CIAM) play'],
+      prospects: [
+      {
+        name: 'Alex Turner',
+        title: 'Chief Digital & E-Commerce Officer',
+        personality: 'Visionary, impatient',
+        mood: 'High energy — lots of initiatives running simultaneously',
+        traits: ['DAVID – Digital Leader', 'Thinks in conversion and repeat purchase', 'Not technical', 'Responds to competitor comparisons'],
+        backstory: 'Alex is driving digital growth and wants checkout and login to be frictionless. He sees fraud and identity as someone else\'s problem until it hits conversion. Goal is to get him interested enough to make a warm intro to his identity or fraud team.',
+        objections: ['Too expensive', 'This isn\'t a priority right now', 'We are happy with our current provider', 'I am too busy right now, call us back in 3 months'],
+        warmup: 'Open with a conversion rate or cart abandonment stat connected to login friction. Reference a comparable retailer. If it resonates commercially he will want to loop in his identity or fraud team.'
+      },
+      {
+        name: 'Hannah Price',
+        title: 'Head of Customer Identity & Access',
+        personality: 'Curious, technical',
+        mood: 'Engaged if you know what you are talking about',
+        traits: ['IVY – IAM Leader', 'Passwordless-curious', 'Battling bot and abuse traffic', 'Wants low-friction and strong controls together'],
+        backstory: 'Hannah is implementing passwordless and low-friction journeys across web and app while protecting against bots and promo abuse. She\'s technically curious and will engage with a credible CIAM conversation. May be mid-evaluation. She knows her current setup has gaps but needs to see a clear path to improvement.',
+        objections: ['We already have an IdP', 'We have just signed a 3-year contract with Okta — but there are some issues', 'Send me an email', 'We\'re in the middle of another project right now, circle back'],
+        warmup: 'Ask a specific question about how they are handling bot traffic or promo abuse alongside legitimate customers. She will engage technically and give you a clearer picture of where the gaps are.'
+      },
+      {
+        name: 'Lewis Graham',
+        title: 'Head of Digital Fraud & Risk',
+        personality: 'Sceptical, cautious',
+        mood: 'Measured — doesn\'t want to be sold to',
+        traits: ['FRANK – Fraud Leader', 'Focused on ATO and promo abuse', 'Wants evidence not claims', 'Thinks about good customer vs bad actor'],
+        backstory: 'Lewis is dealing with a constant arms race against fraud and promo abuse in e-commerce. He\'s cautious and has heard plenty of vendor claims that didn\'t deliver. Doesn\'t own identity infrastructure directly but has strong influence. Will want to understand the signal quality Ping brings, not just a feature list.',
+        objections: ['We are happy with our current provider', 'Our partner/MSP/system integrator handles this', 'No budget', 'Too expensive'],
+        warmup: 'Quote a specific fraud reduction outcome — promo abuse rate, ATO reduction — from a comparable e-commerce brand. Specifics earn credibility. Generic claims will end the call.'
+      }
+      ]
+    },
+    {
+      id: 'ted-baker',
+      name: 'Ted Baker',
+      industry: 'Retail / Fashion & Lifestyle',
+      size: '~2,000–3,000 employees',
+      hq: 'London, UK',
+      tech: 'Customer of Fluent Commerce, whose identity and SSO are powered by PingOne. Multi-region e-commerce and wholesale channels.',
+      pain: 'Multi-brand, multi-channel CX with varying identity flows per site. Need to roll out new digital experiences quickly without rebuilding auth every time.',
+      goal: 'Position Ping as the orchestration and CIAM layer that enables new journeys (VIP, loyalty, returns) fast, on top of existing commerce stack.',
+      angle: 'Fluent Commerce use Ping to give fashion brands like Ted Baker simple, secure SSO across their order management journeys. How easy is it today to launch a new digital experience (like returns or VIP early access) without touching multiple login systems?',
+      tips: ['Emphasise time-to-market for new journeys and tests (A/B, orchestration)', 'Frame identity as CX infra, not just a security tool', 'Map clearly to Improve CX & Build Trust (CIAM platform) play'],
+      prospects: [
+      {
+        name: 'Sophie Clarke',
+        title: 'Director of Digital & Omnichannel',
+        personality: 'Creative, decisive',
+        mood: 'Busy — running multiple channel projects',
+        traits: ['DAVID – Digital Leader', 'Thinks in omnichannel journeys', 'Brand-conscious', 'Wants speed to market'],
+        backstory: 'Sophie is driving joined-up experiences between e-com, wholesale and stores. She feels the friction when launching new digital experiences that each require touching multiple login systems. Identity is a blocker she wants removed, not a product she wants to buy.',
+        objections: ['Not interested', 'Too expensive', 'This isn\'t a priority right now', 'I am too busy right now, call us back in 3 months'],
+        warmup: 'Ask how long it takes them to launch a new digital experience end-to-end. If auth is always the last thing holding things up she will recognise the problem immediately.'
+      },
+      {
+        name: 'Daniel Frost',
+        title: 'Head of Customer Identity & Personalisation',
+        personality: 'Curious, experimental',
+        mood: 'Open — likes exploring new approaches',
+        traits: ['IVY – IAM Leader', 'Personalisation-focused', 'Thinks about consent and data', 'Enjoys a technical conversation'],
+        backstory: 'Daniel is using identity data to personalise journeys and loyalty across regions and brands. He\'s curious and experimental and will engage in a genuine conversation about capabilities. Wants to understand how Ping handles progressive profiling and consent without creating new compliance risk.',
+        objections: ['We already have an IdP', 'We\'re in the middle of another project right now, circle back', 'Send me an email', 'Our partner/MSP/system integrator handles this'],
+        warmup: 'Ask about how they are handling progressive profiling or consent across regions. He will engage with a genuinely curious question and likely share more than you expected.'
+      },
+      {
+        name: 'Rachel Ahmed',
+        title: 'VP, Brand & Customer Experience',
+        personality: 'Empathetic, outcome-driven',
+        mood: 'Thoughtful — wants to understand before committing time',
+        traits: ['LINDA – Line of Business Leader', 'Brand-trust focused', 'Thinks about consent and customer relationships', 'Not technical'],
+        backstory: 'Rachel protects brand trust while pushing new digital experiences. She worries about consent, data misuse and anything that could damage customer relationships. Needs to see how identity connects to brand trust and customer lifetime value, not infrastructure.',
+        objections: ['This isn\'t a priority right now', 'Too expensive', 'We are happy with our current provider', 'I am too busy right now, call us back in 3 months'],
+        warmup: 'Frame identity around brand trust and customer consent — how a bad login or data experience damages NPS. She responds to emotional and brand-level outcomes, not technical features.'
+      }
+      ]
+    },
+    {
+      id: 'nhs-cis',
+      name: 'NHS (Care Identity Service)',
+      industry: 'Healthcare / Public Sector',
+      size: '1M+ staff across NHS organisations',
+      hq: 'England, UK (national health system)',
+      tech: 'Uses ForgeRock (now part of Ping Identity) to provide Care Identity Service directory and federation for ~1.3M users. Modules include authentication, federation, identity gateway and workflow for NHS user directories.',
+      pain: 'Need to manage secure, role-based access for clinicians and staff across thousands of apps and trusts. Strong regulatory pressure around data privacy, safety and auditability.',
+      goal: 'Talk about workforce IAM modernisation (and future CIAM) for NHS orgs on top of national CIS.',
+      angle: 'The NHS Care Identity Service already uses ForgeRock (now Ping) for national directory and federation at scale. We help trusts and partners build on that foundation to simplify clinician access and modernise apps. How joined-up is your access story today between national CIS and local systems?',
+      tips: ['Anchor on building on existing national identity, not replacing it', 'Use language like "single view of staff access across local apps and CIS"', 'Good entry for Workforce IAM / Zero Trust for clinicians'],
+      prospects: [
+      {
+        name: 'Dr. Helen Carter',
+        title: 'National Head of Identity & Access Services',
+        personality: 'Careful, collaborative',
+        mood: 'Professional — used to working across complex stakeholder landscapes',
+        traits: ['IVY – IAM Leader', 'Public sector mindset', 'Thinks about scale and patient safety', 'Values collaboration over sales pressure'],
+        backstory: 'Helen is responsible for safe, timely access to clinical systems for staff and partners across thousands of NHS organisations. She\'s collaborative but careful — any change has patient safety implications. She already works with ForgeRock/Ping at national level so the conversation is about building on that foundation, not replacing it.',
+        objections: ['We already have an IdP', 'Our partner/MSP/system integrator handles this', 'We\'re in the middle of another project right now, circle back', 'Send me an email'],
+        warmup: 'Acknowledge the existing ForgeRock/Ping relationship and ask what is working well and where the gaps are between national CIS and local trust systems. She will appreciate that you have done the homework.'
+      },
+      {
+        name: 'Michael Fraser',
+        title: 'Director of Cyber Security, NHS England',
+        personality: 'Sceptical, very direct',
+        mood: 'Blunt — no tolerance for waffle in a high-stakes environment',
+        traits: ['SALLY – Security Leader', 'Thinks about breach and lateral movement', 'Clinician productivity vs security tension', 'Wants proof over promises'],
+        backstory: 'Michael is fighting account-based breaches and lateral movement across NHS systems while keeping clinicians productive. He\'s very direct and has heard every vendor pitch. The NHS has been a high-profile breach target and he takes that seriously.',
+        objections: ['We are happy with our current provider', 'Too expensive', 'No budget', 'This isn\'t a priority right now'],
+        warmup: 'Reference a specific NHS cyber challenge — credential-based attacks, lateral movement in clinical systems — and ask how they are addressing it today. Specificity earns you the next 60 seconds.'
+      },
+      {
+        name: 'Joanne Blake',
+        title: 'Head of Information Governance & Data Protection',
+        personality: 'Conservative, risk-averse',
+        mood: 'Careful — every conversation is filtered through compliance risk',
+        traits: ['CATHY – Compliance Leader', 'Thinks in audits and controls', 'Needs documented evidence', 'Moves slowly but deliberately'],
+        backstory: 'Joanne needs to demonstrate strong identity controls for regulators and audits across all NHS digital programmes. She\'s conservative and won\'t be rushed. She\'s not a technology buyer but has significant influence — if she sees identity as a compliance risk, it won\'t move forward. If she sees it as a compliance enabler, she\'ll advocate for it.',
+        objections: ['This isn\'t a priority right now', 'We\'re in the middle of another project right now, circle back', 'Our partner/MSP/system integrator handles this', 'Send me an email'],
+        warmup: 'Ask about their current audit trail and access reporting across NHS systems. Frame identity as making compliance evidence easier to produce. She responds to governance language, not technology language.'
+      }
+      ]
+    },
+    {
+      id: 'cigna',
+      name: 'Cigna',
+      industry: 'Healthcare & Insurance',
+      size: '70k–85k employees',
+      hq: 'Bloomfield, Connecticut, USA (global operations including UK)',
+      tech: 'Listed Ping Identity customer in healthcare & insurance. Large mix of member, employer and broker portals, plus mobile apps.',
+      pain: 'Securing sensitive health + financial data across multiple digital properties. Balancing regulatory compliance with low-friction digital access.',
+      goal: 'Use Cigna as a global healthcare logo when talking to UK/Irish payers / insurers about CIAM and B2B/B2C access.',
+      angle: 'Global health and insurance providers like Cigna use Ping to secure member and broker access across many portals and apps. How many separate login systems do your members and intermediaries still see today?',
+      tips: ['Make clear it\'s a global logo you\'re referencing, not UK-HQ', 'Focus on member, employer and broker journeys (claims, benefits, docs)', 'Great for Healthcare CIAM + B2B IAM plays'],
+      prospects: [
+      {
+        name: 'Daniela Rossi',
+        title: 'EMEA Head of Identity & Access Management',
+        personality: 'Analytical, calm',
+        mood: 'Composed — evaluates carefully before engaging',
+        traits: ['IVY – IAM Leader', 'Thinks across markets and BUs', 'Wants central governance', 'Will benchmark vendors thoroughly'],
+        backstory: 'Daniela is providing consistent IAM services across EMEA markets and business units. She\'s analytical and will benchmark Ping carefully. May be aware of gaps in a current Okta deployment across EMEA markets. Calm but hard to impress — she has seen most of what vendors have to offer.',
+        objections: ['We already have an IdP', 'We are happy with our current provider', 'We have just signed a 3-year contract with Okta — but there are some issues', 'Send me an email'],
+        warmup: 'Ask about the consistency of IAM governance across their EMEA markets — where the gaps are between central policy and local implementation. She will engage if you demonstrate you understand multi-market complexity.'
+      },
+      {
+        name: 'Ian McGrath',
+        title: 'Director of Cyber Security, International Markets',
+        personality: 'Sceptical, time-pressed',
+        mood: 'Impatient — aggressive growth targets mean everything is urgent',
+        traits: ['SALLY – Security Leader', 'High-risk app focus', 'Balancing security with growth velocity', 'Has been disappointed by Ping before'],
+        backstory: 'Ian is improving threat detection and access control for high-risk apps while supporting aggressive growth targets. He has been burned before — possibly by a previous Ping deployment that underdelivered. He\'s time-pressed and sceptical. If you can acknowledge the past experience and show what has changed, you have a narrow window.',
+        objections: ['Too expensive', 'No budget', 'This isn\'t a priority right now', 'We tried Ping before and it did not work for us'],
+        warmup: 'If he raises a past Ping experience don\'t sidestep it. Ask what specifically went wrong and what a better outcome would have looked like. Showing accountability opens more doors than deflecting.'
+      },
+      {
+        name: 'Caroline Hughes',
+        title: 'VP, Customer & Provider Digital Experience',
+        personality: 'Strategic, inquisitive',
+        mood: 'Engaged — thinks about the big picture of digital experience',
+        traits: ['LINDA – Line of Business Leader', 'Thinks member, employer, provider journeys', 'Wants frictionless portals', 'Strategic mindset'],
+        backstory: 'Caroline is powering frictionless portals for members, employers and providers across Cigna\'s digital estate. She thinks strategically about experience and has real influence over digital platform investment. Won\'t stay long if the conversation goes too technical or feature-heavy.',
+        objections: ['Not interested', 'We are happy with our current provider', 'I am too busy right now, call us back in 3 months', 'We\'re in the middle of another project right now, circle back'],
+        warmup: 'Ask about the experience gap between member and provider portals — where the friction is and who owns fixing it. She will engage strategically and likely identify internal champions you should speak to.'
+      }
+      ]
+    },
+    {
+      id: 'bbc',
+      name: 'BBC',
+      industry: 'Media & Entertainment / Public Service Broadcaster',
+      size: '~20,000+ staff',
+      hq: 'London, UK',
+      tech: 'Uses Ping / ForgeRock to support tens of millions of digital users and remote workers, scaling during COVID and launching new services quickly.',
+      pain: 'Need to support 45M+ UK users with login for iPlayer, Sounds, etc., plus global services. Rapid spin-up of new digital services during major events and disruptions.',
+      goal: 'Use BBC as a flagship UK media logo to open conversations on CIAM and workforce identity with other broadcasters/streamers.',
+      angle: 'The BBC uses Ping to support tens of millions of viewers and staff, scaling identity quickly as new services launch or traffic spikes. How confident are you today that your own identity layer can handle peak events without extra friction?',
+      tips: ['Emphasise scale + agility for new content/app launches', 'Talk about remote workforce + contractor access during big events', 'Map to Media & Telco CIAM and Workforce IAM plays'],
+      prospects: [
+      {
+        name: 'Nick Harper',
+        title: 'Director of Digital Products & Platforms',
+        personality: 'Visionary, direct',
+        mood: 'Driven — always thinking about scale and next platform launch',
+        traits: ['DAVID – Digital Leader', 'BBC Account scale mindset', 'Thinks about inclusivity and UX', 'Wants agility for new service launches'],
+        backstory: 'Nick is scaling BBC Account to support new products and massive traffic peaks while keeping UX simple and inclusive. He thinks big — tens of millions of users, major live events, rapid new service launches. He wants an identity layer that keeps up without adding complexity. He\'s direct and will tell you quickly if this isn\'t relevant.',
+        objections: ['Too expensive', 'This isn\'t a priority right now', 'We are happy with our current provider', 'I am too busy right now, call us back in 3 months'],
+        warmup: 'Reference the scale challenge — peak events, rapid service launches, inclusive UX — and ask what is currently the hardest thing to manage about their identity layer at that scale.'
+      },
+      {
+        name: 'Lucy Bennett',
+        title: 'Head of Identity & Access Services',
+        personality: 'Technical, curious',
+        mood: 'Open to a good technical conversation',
+        traits: ['IVY – IAM Leader', 'Workforce + audience platform in one', 'High availability focus', 'Curious about modular architecture'],
+        backstory: 'Lucy runs one identity platform for both workforce and audience — a rare dual mandate. She needs it to handle high traffic and launch new services quickly. She\'s technically curious and will engage with a credible conversation about platform architecture. May already be in an Okta contract but thinking about longer-term platform direction.',
+        objections: ['We already have an IdP', 'We have just signed a 3-year contract with Okta', 'Send me an email', 'Our partner/MSP/system integrator handles this'],
+        warmup: 'Ask about the challenges of running one platform for both workforce and public audience identity. It is an unusual setup and she will appreciate that you recognise the complexity.'
+      },
+      {
+        name: 'James Rowe',
+        title: 'Principal Solutions Architect, Identity & Access',
+        personality: 'Calm, sceptical',
+        mood: 'Measured — will probe your technical claims carefully',
+        traits: ['EDGAR – Architect', 'Standards-based thinking', 'Anti-lock-in mindset', 'Will test your technical depth'],
+        backstory: 'James keeps the BBC identity architecture modular and standards-based so they are not locked into any vendor. He\'s calm but will probe your technical claims methodically. May have had a previous Ping experience. Values openness, interoperability and not being sold a closed ecosystem.',
+        objections: ['We already have an IdP', 'We are happy with our current provider', 'Too expensive', 'We tried Ping before and it did not work for us'],
+        warmup: 'Talk about open standards, modularity and avoiding lock-in before going anywhere near Ping-specific features. He respects vendors who lead with interoperability, not proprietary advantages.'
+      }
+      ]
+    },
+    {
+      id: 'vodafone',
+      name: 'Vodafone',
+      industry: 'Telecommunications / Media',
+      size: '~90,000+ employees',
+      hq: 'Newbury, UK',
+      tech: 'Listed notable Ping Identity customer in telecom sector. Large portfolio of consumer, enterprise and IoT services.',
+      pain: 'Managing customer, employee, and partner identities across many brands and countries. New AI-driven digital channels (e.g. AI spokesperson pilots) introduce complex identity and fraud challenges.',
+      goal: 'Position Ping as the identity platform that supports telco convergence (mobile, broadband, content) with secure, orchestrated journeys.',
+      angle: 'Telcos like Vodafone rely on Ping to secure access across mobile, broadband and content services while experimenting with new AI-driven digital channels. How are you planning to manage identity and trust as you roll out more automated or AI-powered customer journeys?',
+      tips: ['Tie to 5G, AI agents, and converged services – identity as the glue', 'Ask where fraud & ATO sit today (security vs product vs fraud)', 'Good for Telco CIAM / Fraud Prevention / Agentic Trust conversations'],
+      prospects: [
+      {
+        name: 'Fiona Gallagher',
+        title: 'Group Director of IT & Cloud Platforms',
+        personality: 'Direct, outcome-driven',
+        mood: 'Efficient — global remit means no time for anything unfocused',
+        traits: ['ISAAC – IT Leader', 'Global cloud strategy mindset', 'Harmonisation across markets', 'Allergic to complexity'],
+        backstory: 'Fiona is harmonising IAM across mobile, fixed, TV and enterprise globally. She\'s dealing with a patchwork of solutions across markets and wants to consolidate. She\'s direct and outcome-driven — she wants to know what gets simpler, not what gets added. May be mid-evaluation with Okta and aware of gaps.',
+        objections: ['We already have an IdP', 'We have just signed a 3-year contract with Okta — but there are some issues', 'We\'re in the middle of another project right now, circle back', 'Send me an email'],
+        warmup: 'Ask about the biggest challenge in harmonising IAM across Vodafone\'s different markets and service lines. She will respond to someone who understands global telco complexity, not a generic cloud IAM pitch.'
+      },
+      {
+        name: 'Rory McKenna',
+        title: 'Head of Identity & Access Engineering',
+        personality: 'Technical, curious',
+        mood: 'Engaged if the conversation is technically substantive',
+        traits: ['IVY – IAM Leader', 'Multi-tenant platform thinking', 'High availability non-negotiable', 'Curious about engineering approach'],
+        backstory: 'Rory is building a high-availability, multi-tenant IAM platform for customers, employees and partners. He\'s technically deep and will engage with a credible engineering conversation. Frustrated by his current provider in some areas and curious about alternatives, but won\'t be rushed into anything.',
+        objections: ['We are happy with our current provider', 'Our partner/MSP/system integrator handles this', 'Too expensive', 'This isn\'t a priority right now'],
+        warmup: 'Ask about the engineering challenges of running multi-tenant IAM at scale. He will engage technically and likely share where the current platform is falling short.'
+      },
+      {
+        name: 'Olivia Byrne',
+        title: 'Head of Digital Fraud & Identity Protection',
+        personality: 'Sceptical, cautious',
+        mood: 'On guard — SIM swap and ATO are live problems she is dealing with daily',
+        traits: ['FRANK – Fraud Leader', 'SIM swap and ATO specialist', 'Wants strong signals not added friction', 'Evidence-first mentality'],
+        backstory: 'Olivia is fighting SIM swap, ATO and subscription fraud across digital channels. It\'s a live daily battle and she\'s cautious about anything that claims to help without evidence. She\'s sceptical of vendors who don\'t understand the telco-specific fraud landscape.',
+        objections: ['We already have an IdP', 'We are happy with our current provider', 'No budget', 'Send me an email'],
+        warmup: 'Open with something specific to telco fraud — SIM swap, subscription fraud, or ATO through digital channels. Show you understand the threat model before mentioning any product.'
+      }
+      ]
+    }
+  ];
+}
+
+
+// ── STORAGE ──
+const STORAGE_KEY = 'ccsim_v4';
+function loadCompanies() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || getDefaults(); }
+  catch(e) { return getDefaults(); }
+}
+function saveCompanies(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); updateCount(); }
+
+// ── STATE ──
+let companies = loadCompanies();
+let currentRole = null;
+let currentCompany = null;
+let currentProspect = null;
+let timerInterval = null;
+let timerSecs = 180;
+let prospectEditorCount = 0;
+
+// ── URL SESSION ENCODING ──
+// Encodes company index + prospect index into a short base64 URL param
+function encodeSession(companyId, prospectIdx) {
+  const payload = companyId + '|' + prospectIdx;
+  return btoa(payload);
+}
+function decodeSession(code) {
+  try {
+    const payload = atob(code);
+    const parts = payload.split('|');
+    return { companyId: parts[0], prospectIdx: parseInt(parts[1]) };
+  } catch(e) { return null; }
+}
+function buildShareUrl(companyId, prospectIdx) {
+  const code = encodeSession(companyId, prospectIdx);
+  const base = window.location.href.split('?')[0].split('#')[0];
+  return base + '?s=' + code;
+}
+
+// ── INIT: check for incoming session link ──
+function init() {
+  updateCount();
+  const params = new URLSearchParams(window.location.search);
+  const sessionCode = params.get('s');
+  if (sessionCode) {
+    // Auto-load as caller
+    const decoded = decodeSession(sessionCode);
+    if (decoded) {
+      const co = companies.find(c => c.id === decoded.companyId);
+      const pr = co && co.prospects && co.prospects[decoded.prospectIdx];
+      if (co && pr) {
+        currentRole = 'caller';
+        currentCompany = co;
+        currentProspect = pr;
+        document.getElementById('role-caller').className = 'role-card active-caller';
+        renderCallView();
+        return;
+      }
+    }
+    // Bad link
+    document.getElementById('link-error').textContent = 'That link looks invalid — ask your colleague to send a new one.';
+    document.getElementById('link-error').style.display = 'block';
+    document.getElementById('caller-link-entry').style.display = 'block';
+    setRole('caller');
+    return;
+  }
+  renderScenarioGrid();
+}
+
+// ── NAV ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'manage') renderCompanyList();
+}
+function updateCount() { document.getElementById('co-count').textContent = companies.length; }
+
+// ── ROLE SELECT ──
+function setRole(role) {
+  currentRole = role;
+  document.getElementById('role-caller').className = 'role-card' + (role === 'caller' ? ' active-caller' : '');
+  document.getElementById('role-prospect').className = 'role-card' + (role === 'prospect' ? ' active-prospect' : '');
+  document.getElementById('caller-link-entry').style.display = role === 'caller' ? 'block' : 'none';
+  document.getElementById('prospect-continue-btn').style.display = role === 'prospect' ? 'block' : 'none';
+}
+
+function loadFromLink() {
+  const input = document.getElementById('caller-link-input').value.trim();
+  const errEl = document.getElementById('link-error');
+  errEl.style.display = 'none';
+  let code = null;
+  try {
+    const url = new URL(input);
+    code = url.searchParams.get('s');
+  } catch(e) { code = input; }
+  if (!code) { errEl.textContent = 'No session code found in that link.'; errEl.style.display = 'block'; return; }
+  const decoded = decodeSession(code);
+  if (!decoded) { errEl.textContent = 'Could not read that link — try again.'; errEl.style.display = 'block'; return; }
+  const co = companies.find(c => c.id === decoded.companyId);
+  const pr = co && co.prospects && co.prospects[decoded.prospectIdx];
+  if (!co || !pr) { errEl.textContent = 'Company or persona not found — make sure you both have the same companies saved.'; errEl.style.display = 'block'; return; }
+  currentCompany = co;
+  currentProspect = pr;
+  renderCallView();
+}
+
+function skipToSetup() {
+  // Manual mode: prospect sets up, caller uses same screen manually
+  currentRole = 'caller';
+  goToProspectSetup();
+}
+
+function goToProspectSetup() {
+  if (companies.length === 0) {
+    document.getElementById('step-role').style.display = 'none';
+    document.getElementById('no-companies').style.display = 'block';
+    return;
+  }
+  document.getElementById('step-role').style.display = 'none';
+  document.getElementById('step-prospect-setup').style.display = 'block';
+  renderScenarioGrid();
+}
+
+// ── SCENARIO GRID ──
+function renderScenarioGrid() {
+  const grid = document.getElementById('scenario-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  companies.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'scenario-card';
+    div.id = 'sc-' + c.id;
+    div.onclick = () => selectScenario(c.id);
+    div.innerHTML = `<div class="sc-name">${c.name}</div><div class="sc-meta">${c.industry}</div>`;
+    grid.appendChild(div);
+  });
+}
+
+function selectScenario(id) {
+  currentCompany = companies.find(c => c.id === id);
+  currentProspect = null;
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  const el = document.getElementById('sc-' + id);
+  if (el) el.classList.add('active');
+  document.getElementById('share-section').style.display = 'none';
+
+  // Show prospect picker
+  const section = document.getElementById('prospect-persona-section');
+  const pickGrid = document.getElementById('prospect-pick-grid');
+  if (!currentCompany.prospects || currentCompany.prospects.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  pickGrid.innerHTML = '';
+  currentCompany.prospects.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'prospect-pick-card';
+    div.id = 'ppc-' + idx;
+    div.onclick = () => selectPersona(idx);
+    const traitTag = p.traits && p.traits[0] ? `<span class="ppc-tag">${p.traits[0]}</span>` : '';
+    div.innerHTML = `<div style="flex:1"><div class="ppc-name">${p.name}</div><div class="ppc-title">${p.title}</div></div>${traitTag}`;
+    pickGrid.appendChild(div);
+  });
+}
+
+function selectPersona(idx) {
+  currentProspect = currentCompany.prospects[idx];
+  document.querySelectorAll('.prospect-pick-card').forEach(c => c.classList.remove('active'));
+  const el = document.getElementById('ppc-' + idx);
+  if (el) el.classList.add('active');
+
+  // Generate share link
+  const url = buildShareUrl(currentCompany.id, idx);
+  document.getElementById('share-url-display').textContent = url;
+  document.getElementById('share-section').style.display = 'block';
+}
+
+function copyShareLink() {
+  const url = document.getElementById('share-url-display').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const fb = document.getElementById('copy-feedback');
+    fb.classList.add('show');
+    setTimeout(() => fb.classList.remove('show'), 2000);
+  });
+}
+
+function startAsProspect() {
+  if (!currentCompany || !currentProspect) { alert('Pick a company and persona first'); return; }
+  currentRole = 'prospect';
+  renderCallView();
+}
+
+// ── CALL VIEW ──
+function renderCallView() {
+  document.getElementById('c-name').textContent = currentCompany.name;
+  document.getElementById('c-industry').textContent = currentCompany.industry || '—';
+  document.getElementById('c-size').textContent = currentCompany.size || '—';
+  document.getElementById('c-hq').textContent = currentCompany.hq || '—';
+  document.getElementById('c-tech').textContent = currentCompany.tech || '—';
+  document.getElementById('c-pain').textContent = currentCompany.pain || '—';
+  document.getElementById('call-company-label').textContent = currentCompany.name;
+
+  if (currentRole === 'caller') {
+    document.getElementById('caller-view').style.display = 'block';
+    document.getElementById('prospect-view').style.display = 'none';
+    document.getElementById('c-title').textContent = currentProspect.title || '—';
+    document.getElementById('c-goal').textContent = currentCompany.goal || '—';
+    document.getElementById('c-angle').textContent = currentCompany.angle || '—';
+    const tipsList = document.getElementById('c-tips');
+    tipsList.innerHTML = '';
+    (currentCompany.tips || []).forEach(t => { const li = document.createElement('li'); li.textContent = t; tipsList.appendChild(li); });
+  } else {
+    document.getElementById('prospect-view').style.display = 'block';
+    document.getElementById('caller-view').style.display = 'none';
+    document.getElementById('p-name').textContent = currentProspect.name || '—';
+    document.getElementById('p-title').textContent = currentProspect.title || '—';
+    document.getElementById('p-personality').textContent = currentProspect.personality || '—';
+    document.getElementById('p-mood').textContent = currentProspect.mood || '—';
+    document.getElementById('p-backstory').textContent = currentProspect.backstory || '—';
+    document.getElementById('p-warmup').textContent = currentProspect.warmup || '—';
+    const tw = document.getElementById('p-traits-wrap');
+    tw.innerHTML = '';
+    (currentProspect.traits || []).forEach(t => { const s = document.createElement('span'); s.className = 'trait-tag'; s.textContent = t; tw.appendChild(s); });
+    const ol = document.getElementById('p-objections');
+    ol.innerHTML = '';
+    (currentProspect.objections || []).forEach(o => { const li = document.createElement('li'); li.textContent = '"' + o + '"'; ol.appendChild(li); });
+  }
+
+  startTimer();
+  document.getElementById('step-role').style.display = 'none';
+  document.getElementById('step-prospect-setup').style.display = 'none';
+  document.getElementById('sim-call').style.display = 'block';
+  document.getElementById('sim-debrief').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+function startTimer() {
+  timerSecs = 180;
+  clearInterval(timerInterval);
+  const fill = document.getElementById('timer-fill');
+  const display = document.getElementById('call-timer');
+  fill.style.background = 'var(--accent)';
+  timerInterval = setInterval(() => {
+    timerSecs--;
+    const pct = Math.max(0, (timerSecs / 180) * 100);
+    fill.style.width = pct + '%';
+    const abs = Math.abs(timerSecs);
+    const m = Math.floor(abs / 60), s = abs % 60;
+    display.textContent = (timerSecs < 0 ? '+' : '') + m + ':' + s.toString().padStart(2, '0');
+    if (timerSecs <= 30) fill.style.background = 'var(--red)';
+  }, 1000);
+}
+
+function endRound() {
+  clearInterval(timerInterval);
+  document.getElementById('debrief-sub').textContent = currentCompany.name + ' — ' + currentProspect.title;
+  document.getElementById('d-name').textContent = currentProspect.name || '—';
+  document.getElementById('d-title').textContent = currentProspect.title || '—';
+  document.getElementById('d-personality').textContent = currentProspect.personality || '—';
+  document.getElementById('d-mood').textContent = currentProspect.mood || '—';
+  document.getElementById('d-backstory').textContent = currentProspect.backstory || '—';
+  document.getElementById('reveal-btn').style.display = 'block';
+  document.getElementById('persona-revealed').style.display = 'none';
+  document.getElementById('sim-call').style.display = 'none';
+  document.getElementById('sim-debrief').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function revealPersona() {
+  document.getElementById('reveal-btn').style.display = 'none';
+  document.getElementById('persona-revealed').style.display = 'block';
+}
+
+function cancelRound() {
+  clearInterval(timerInterval);
+  newRound();
+}
+
+function newRound() {
+  clearInterval(timerInterval);
+  currentRole = null; currentCompany = null; currentProspect = null;
+  document.getElementById('role-caller').className = 'role-card';
+  document.getElementById('role-prospect').className = 'role-card';
+  document.getElementById('caller-link-entry').style.display = 'none';
+  document.getElementById('prospect-continue-btn').style.display = 'none';
+  document.getElementById('caller-link-input') && (document.getElementById('caller-link-input').value = '');
+  document.getElementById('link-error').style.display = 'none';
+  document.getElementById('step-role').style.display = 'block';
+  document.getElementById('step-prospect-setup').style.display = 'none';
+  document.getElementById('sim-call').style.display = 'none';
+  document.getElementById('sim-debrief').style.display = 'none';
+  document.getElementById('no-companies').style.display = 'none';
+  // Clean URL
+  window.history.replaceState({}, '', window.location.pathname);
+  window.scrollTo(0, 0);
+}
+
+// ── MANAGE COMPANIES ──
+function renderCompanyList() {
+  const list = document.getElementById('company-list');
+  list.innerHTML = '';
+  if (companies.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">🏢</div><p>No companies yet.</p></div>';
+    return;
+  }
+  companies.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'company-item';
+    const pills = (c.prospects || []).map(p => `<span class="prospect-pill">${p.title || 'Persona'}</span>`).join('');
+    div.innerHTML = `
+      <div class="company-item-info">
+        <div class="company-item-name">${c.name}</div>
+        <div class="company-item-meta">${c.industry || ''}${c.size ? ' · ' + c.size : ''}</div>
+        <div class="prospect-pills">${pills || '<span class="prospect-pill" style="opacity:0.4">No personas</span>'}</div>
+      </div>
+      <div class="company-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editCompany('${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCompany('${c.id}')">Delete</button>
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function deleteCompany(id) {
+  if (!confirm('Delete this company?')) return;
+  companies = companies.filter(c => c.id !== id);
+  saveCompanies(companies);
+  renderCompanyList();
+}
+
+function openAddCompany() {
+  document.getElementById('modal-title').textContent = 'Add Company';
+  document.getElementById('edit-id').value = '';
+  clearForm();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function editCompany(id) {
+  const c = companies.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('modal-title').textContent = 'Edit Company';
+  document.getElementById('edit-id').value = c.id;
+  document.getElementById('f-name').value = c.name || '';
+  document.getElementById('f-industry').value = c.industry || '';
+  document.getElementById('f-size').value = c.size || '';
+  document.getElementById('f-hq').value = c.hq || '';
+  document.getElementById('f-tech').value = c.tech || '';
+  document.getElementById('f-pain').value = c.pain || '';
+  document.getElementById('f-goal').value = c.goal || '';
+  document.getElementById('f-angle').value = c.angle || '';
+  document.getElementById('f-tips').value = (c.tips || []).join('\n');
+  const container = document.getElementById('prospects-container');
+  container.innerHTML = '';
+  prospectEditorCount = 0;
+  (c.prospects || []).forEach(p => addProspectEditor(p));
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function clearForm() {
+  ['f-name','f-industry','f-size','f-hq','f-tech','f-pain','f-goal','f-angle','f-tips'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('prospects-container').innerHTML = '';
+  prospectEditorCount = 0;
+}
+
+function addProspectEditor(data) {
+  const idx = prospectEditorCount++;
+  const container = document.getElementById('prospects-container');
+  const div = document.createElement('div');
+  div.className = 'prospect-editor';
+  div.id = 'pe-' + idx;
+  div.innerHTML = `
+    <div class="prospect-editor-title">
+      <span>PROSPECT ${idx + 1}</span>
+      <button class="btn btn-danger btn-sm" onclick="removeProspect(${idx})">Remove</button>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Name</label><input type="text" id="pe-name-${idx}" value="${(data&&data.name)||''}"></div>
+      <div class="field-group"><label class="field-label">Job Title *</label><input type="text" id="pe-title-${idx}" value="${(data&&data.title)||''}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">Personality</label><input type="text" id="pe-personality-${idx}" value="${(data&&data.personality)||''}"></div>
+      <div class="field-group"><label class="field-label">Mood today</label><input type="text" id="pe-mood-${idx}" value="${(data&&data.mood)||''}"></div>
+    </div>
+    <div class="field-group"><label class="field-label">Traits (one per line)</label><textarea id="pe-traits-${idx}">${(data&&data.traits||[]).join('\n')}</textarea></div>
+    <div class="field-group"><label class="field-label">Backstory</label><textarea id="pe-backstory-${idx}">${(data&&data.backstory)||''}</textarea></div>
+    <div class="field-group"><label class="field-label">Objections (one per line)</label><textarea id="pe-objections-${idx}">${(data&&data.objections||[]).join('\n')}</textarea></div>
+    <div class="field-group"><label class="field-label">When to warm up</label><textarea id="pe-warmup-${idx}">${(data&&data.warmup)||''}</textarea></div>`;
+  container.appendChild(div);
+}
+
+function removeProspect(idx) { const el = document.getElementById('pe-' + idx); if (el) el.remove(); }
+
+function saveCompany() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Company name is required'); return; }
+  const prospects = [];
+  document.querySelectorAll('.prospect-editor').forEach(el => {
+    const idx = el.id.replace('pe-', '');
+    const title = document.getElementById('pe-title-' + idx)?.value.trim();
+    if (!title) return;
+    prospects.push({
+      name: document.getElementById('pe-name-' + idx)?.value.trim() || '',
+      title,
+      personality: document.getElementById('pe-personality-' + idx)?.value.trim() || '',
+      mood: document.getElementById('pe-mood-' + idx)?.value.trim() || '',
+      traits: (document.getElementById('pe-traits-' + idx)?.value || '').split('\n').map(s=>s.trim()).filter(Boolean),
+      backstory: document.getElementById('pe-backstory-' + idx)?.value.trim() || '',
+      objections: (document.getElementById('pe-objections-' + idx)?.value || '').split('\n').map(s=>s.trim()).filter(Boolean),
+      warmup: document.getElementById('pe-warmup-' + idx)?.value.trim() || ''
+    });
+  });
+  const editId = document.getElementById('edit-id').value;
+  const company = {
+    id: editId || 'co-' + Date.now(),
+    name, industry: document.getElementById('f-industry').value.trim(),
+    size: document.getElementById('f-size').value.trim(), hq: document.getElementById('f-hq').value.trim(),
+    tech: document.getElementById('f-tech').value.trim(), pain: document.getElementById('f-pain').value.trim(),
+    goal: document.getElementById('f-goal').value.trim(), angle: document.getElementById('f-angle').value.trim(),
+    tips: document.getElementById('f-tips').value.split('\n').map(s=>s.trim()).filter(Boolean),
+    prospects
+  };
+  if (editId) { companies = companies.map(c => c.id === editId ? company : c); }
+  else { companies.push(company); }
+  saveCompanies(companies);
+  closeModal();
+  renderCompanyList();
+}
+
+document.getElementById('modal-overlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+init();
+</script>
+</body>
+</html>
